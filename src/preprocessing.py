@@ -10,7 +10,7 @@ import joblib
 from pathlib import Path
 from src.config import (
     TARGET_COLUMN, DROP_COLUMNS, TEST_SIZE, RANDOM_STATE,
-    USE_SMOTE, SMOTE_RANDOM_STATE, SCALER_FILE
+    USE_SMOTE, SMOTE_RANDOM_STATE, SCALER_FILE, MODEL_DIR
 )
 
 
@@ -97,7 +97,8 @@ class DataPreprocessor:
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_test_scaled = self.scaler.transform(X_test)
         
-        # Save scaler
+        # Save scaler (ensure the models directory exists first)
+        MODEL_DIR.mkdir(parents=True, exist_ok=True)
         joblib.dump(self.scaler, SCALER_FILE)
         print(f"Scaler saved to {SCALER_FILE}")
         
