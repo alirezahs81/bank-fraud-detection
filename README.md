@@ -1,130 +1,136 @@
 # 🏦 Bank Fraud Detection System
 
-یک پروژه پایتون پیشرفته، ماژولار و تولید‌محور برای **تشخیص تقلب در تراکنش‌های کارت اعتباری** با استفاده از الگوریتم‌های یادگیری ماشین.
+[![CI](https://github.com/alirezahs81/bank-fraud-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/alirezahs81/bank-fraud-detection/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.x-F7931E?logo=scikit-learn&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-این پروژه بر اساس دیتاست معروف **Credit Card Fraud Detection** از کگل ساخته شده و شامل تمام مراحل یک پروژه ML کامل است: از بارگذاری دیتا و پیش‌پردازش تا آموزش مدل، ارزیابی جامع و استنتاج (Inference).
+An advanced, modular and production-oriented Python project for **detecting fraud in credit card transactions** using machine learning.
+
+Built on the well-known [Credit Card Fraud Detection dataset from Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud), covering all stages of a complete ML project: from data loading and preprocessing to model training, comprehensive evaluation and inference.
 
 ---
 
-## 🛠️ قابلیت‌های کلیدی
+## 🛠️ Key Features
 
-| ویژگی | توضیح |
+| Feature | Description |
 |----------|---------|
-| **پیش‌پردازش هوشمند** | اسکیل‌کردن ویژگی‌ها، حذف ستون‌های بی‌فنی، و مدیریت ناهمسانی کلاس‌ها با SMOTE |
-| **چندین الگوریتم** | Logistic Regression، Random Forest، XGBoost، LightGBM |
-| **اعتبارسنجی cross-validation** | انتخاب بهترین مدل بر اساس F1-Score با Stratified K-Fold |
-| **ارزیابی جامع** | Confusion Matrix، ROC Curve، Precision-Recall Curve، تحلیل آستانه (Threshold Analysis) |
-| **استنتاج سریع** | کلاس `FraudPredictor` برای پیش‌بینی بلادرنگ روی تراکنش‌های جدید |
-| **ساختار ماژولار** | کد تمیز، قابل توسعه و تست‌پذیر |
+| **Smart preprocessing** | Feature scaling, dropping non-informative columns, and class-imbalance handling with SMOTE (applied inside CV folds — leakage-free) |
+| **Multiple algorithms** | Logistic Regression, Random Forest, XGBoost, LightGBM |
+| **Cross-validation** | Best model selected by F1-Score with Stratified K-Fold |
+| **Comprehensive evaluation** | Confusion Matrix, ROC Curve, Precision-Recall Curve, Threshold Analysis |
+| **Fast inference** | `FraudPredictor` class for real-time prediction on new transactions |
+| **Modular structure** | Clean, extensible and testable code |
 
 ---
 
-## 📁 ساختار پروژه
+## 📁 Project Structure
 
 ```text
 Bank Fraud Detection/
 │
 ├── data/
 │   └── raw/
-│       └── creditcard.csv          # دیتاست اصلی (دانلود از کگل)
+│       └── creditcard.csv          # Main dataset (downloaded from Kaggle)
 │
 ├── models/
-│   ├── best_fraud_model.joblib     # بهترین مدل آموزش‌دیده
-│   └── scaler.joblib               # اسکیلر برای پیش‌پردازش
+│   ├── best_fraud_model.joblib     # Trained best model
+│   └── scaler.joblib               # Scaler for preprocessing
 │
 ├── src/
 │   ├── __init__.py
-│   ├── config.py                   # تنظیمات پروژه
-│   ├── data_loader.py              # بارگذاری و اعتبارسنجی دیتا
-│   ├── preprocessing.py            # پیش‌پردازش، اسکیل، SMOTE
-│   ├── train.py                    # آموزش مدل‌ها و انتخاب بهترین
-│   ├── evaluate.py                 # ارزیابی و بصری‌سازی
-│   ├── predict.py                  # استنتاج (Inference) برای تولید
-│   └── main.py                     # نقطه ورود اصلی پایپ‌لاین
+│   ├── config.py                   # Project configuration
+│   ├── data_loader.py              # Data loading & validation
+│   ├── preprocessing.py            # Preprocessing, scaling, split
+│   ├── train.py                    # Model training & selection (SMOTE inside CV)
+│   ├── evaluate.py                 # Evaluation & visualization
+│   ├── predict.py                  # Production inference
+│   └── main.py                     # Main pipeline entry point
 │
 ├── tests/
-│   └── test_pipeline.py            # تست‌های واحد
+│   └── test_pipeline.py            # Unit tests
 │
-├── requirements.txt                # وابستگی‌ها
+├── requirements.txt                # Dependencies
 └── README.md
 ```
 
 ---
 
-## ⚙️ نصب و راه‌اندازی
+## ⚙️ Installation & Setup
 
-### ۱. کلون پروژه و ورود به پوشه
+### 1. Clone the repository
 ```bash
-cd "Bank Fraud Detection"
+git clone https://github.com/alirezahs81/bank-fraud-detection.git
+cd bank-fraud-detection
 ```
 
-### ۲. ساخت و فعال‌سازی محیط مجازی
+### 2. Create and activate a virtual environment
 ```bash
-python -m venv venv
-# ویندوز:
-venv\Scripts\activate
-# لینوکس/مک:
-source venv/bin/activate
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# Linux/Mac:
+source .venv/bin/activate
 ```
 
-### ۳. نصب وابستگی‌ها
+### 3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### ۴. دانلود دیتاست
-**روش خودکار (نیاز به کگل API):**
+### 4. Download the dataset
+**Automatic (requires Kaggle API):**
 ```bash
-# تنظیم کگل API (یک‌بار)
-# فایل kaggle.json را در ~/.kaggle/ (لینوکس/مک) یا C:\Users\<username>\.kaggle\ (ویندوز) قرار دهید
+# Set up the Kaggle API (once)
+# Place kaggle.json in ~/.kaggle/ (Linux/Mac) or C:\Users\<username>\.kaggle\ (Windows)
 
 kaggle datasets download -d mlg-ulb/creditcardfraud -p data/raw --unzip
 ```
 
-**روش دستی:**
-1. به [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) بروید
-2. فایل `creditcard.csv` را دانلود کنید
-3. در مسیر `data/raw/creditcard.csv` قرار دهید
+**Manual:**
+1. Go to [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+2. Download `creditcard.csv`
+3. Place it at `data/raw/creditcard.csv`
 
 ---
 
-## 🚀 اجرای پایپ‌لاین کامل
+## 🚀 Running the Full Pipeline
 
 ```bash
 python -m src.main
 ```
 
-این دستور مراحل زیر را به ترتیب اجرا می‌کند:
-1. **بارگذاری دیتا** - خواندن CSV و نمایش اطلاعات پایه
-2. **پیش‌پردازش** - اسکیل‌کردن، Train/Test Split، SMOTE
-3. **آموزش مدل‌ها** - Cross-validation روی ۴ الگوریتم
-4. **ارزیابی جامع** - متریک‌ها، نمودارهای ROC/PR/Confusion Matrix
-5. **دمو پیش‌بینی** - تست روی تراکنش‌های نمونه
+This runs the following steps in order:
+1. **Data loading** — read CSV and display basic info
+2. **Preprocessing** — scaling, train/test split (SMOTE applied per CV fold inside the trainer)
+3. **Model training** — cross-validation over 4 algorithms
+4. **Comprehensive evaluation** — metrics, ROC/PR/Confusion Matrix plots
+5. **Prediction demo** — test on sample transactions
 
 ---
 
-## 📊 خروجی‌های ارزیابی
+## 📊 Evaluation Outputs
 
-پروژه به طور خودکار نمودارهای زیر را تولید می‌کند:
+The project automatically produces the following plots:
 
-| نمودار | توضیح |
+| Plot | Description |
 |---------|---------|
-| **Confusion Matrix** | TP, TN, FP, FN با آستانه پیش‌فرض 0.5 |
-| **ROC Curve** | مساحت زیر منحنی (AUC) برای تشخیص قدرت تفکیک |
-| **Precision-Recall Curve** | مهم برای دیتاهای ناهمسان (Fraud ~0.17%) |
-| **Threshold Analysis** | یافتن آستانه بهینه برای بهینه‌سازی F1/Precision/Recall |
+| **Confusion Matrix** | TP, TN, FP, FN at the default 0.5 threshold |
+| **ROC Curve** | Area under curve (AUC) for discriminative power |
+| **Precision-Recall Curve** | Essential for highly imbalanced data (~0.17% fraud) |
+| **Threshold Analysis** | Find the optimal threshold to maximize F1/Precision/Recall |
 
 ---
 
-## 🔮 استفاده در تولید (Production Inference)
+## 🔮 Production Inference
 
 ```python
 from src.predict import FraudPredictor
 
-# инициализация
+# Initialization
 predictor = FraudPredictor()
 
-# تراکنش جدید (لیست ۲۹ ویژگی: V1-V28 + Amount)
+# A new transaction (list of 29 features: V1-V28 + Amount)
 new_transaction = [
     -1.359807, -0.072781, 2.536347, 1.378155, -0.338321,
     0.462388, 0.239599, 0.098698, 0.363787, 0.090794,
@@ -134,11 +140,11 @@ new_transaction = [
     -0.189115, 0.133558, -0.021053, 149.62
 ]
 
-# پیش‌بینی ساده (0=سالم، 1=تقلب)
+# Simple prediction (0 = legitimate, 1 = fraud)
 prediction = predictor.predict(new_transaction)
-print(f"Prediction: {prediction[0]}")  # 0 یا 1
+print(f"Prediction: {prediction[0]}")  # 0 or 1
 
-# پیش‌بینی با جزئیات کامل
+# Prediction with full details
 details = predictor.predict_with_details(new_transaction)
 print(details)
 # {
@@ -149,37 +155,37 @@ print(details)
 #     'confidence': 0.999766
 # }
 
-# پیش‌بینی دسته‌ای (Batch) روی DataFrame
+# Batch prediction on a DataFrame
 import pandas as pd
 df_transactions = pd.read_csv("new_transactions.csv")
 results_df = predictor.predict_batch(df_transactions)
 print(results_df[['fraud_prediction', 'fraud_probability', 'prediction_label']].head())
 ```
 
-### تغییر آستانه (Threshold Tuning)
+### Threshold Tuning
 ```python
-# برای حساسیت بیشتر (کمتر False Negative)
+# For higher sensitivity (fewer false negatives)
 predictor.set_threshold(0.3)
 
-# برای دقت بیشتر (کمتر False Positive)  
+# For higher precision (fewer false positives)
 predictor.set_threshold(0.7)
 ```
 
 ---
 
-## ⚙️ تنظیمات مهم (config.py)
+## ⚙️ Key Configuration (config.py)
 
-| پارامتر | پیش‌فرض | توضیح |
+| Parameter | Default | Description |
 |-----------|---------|---------|
-| `TEST_SIZE` | 0.2 | نسبت دیتای تست |
-| `USE_SMOTE` | True | فعال‌سازی SMOTE برای بالانس کلاس‌ها |
-| `CV_FOLDS` | 5 | تعداد فولدرهای Cross-Validation |
-| `DEFAULT_THRESHOLD` | 0.5 | آستانه پیش‌فرض klasyfikیشن |
-| `MODELS_CONFIG` | - | تنظیمات هایپرپارامترها برای هر مدل |
+| `TEST_SIZE` | 0.2 | Test data ratio |
+| `USE_SMOTE` | True | Enable SMOTE for class balancing |
+| `CV_FOLDS` | 5 | Number of cross-validation folds |
+| `DEFAULT_THRESHOLD` | 0.5 | Default classification threshold |
+| `MODELS_CONFIG` | - | Hyperparameter settings for each model |
 
 ---
 
-## 🧪 اجرای تست‌ها
+## 🧪 Running the Tests
 
 ```bash
 pytest tests/ -v
@@ -187,25 +193,27 @@ pytest tests/ -v
 
 ---
 
-## 📈 نتایج معمول (Benchmark)
+## 📈 Benchmark Results
 
-روی دیتاست Credit Card Fraud Detection (284,807 تراکنش، 492 تقلب ~0.17%):
+On the Credit Card Fraud Detection dataset (284,807 transactions, 492 frauds ≈ 0.17%):
 
-| مدل | CV F1-Score | Test F1 | Test ROC-AUC | Test Avg Precision |
+| Model | CV F1-Score | Test F1 | Test ROC-AUC | Test Avg Precision |
 |------|-------------|---------|--------------|-------------------|
 | Logistic Regression | ~0.82 | ~0.80 | ~0.97 | ~0.85 |
 | Random Forest | ~0.85 | ~0.83 | ~0.98 | ~0.88 |
-| **XGBoost** | **~0.88** | **~0.86** | **~0.99** | **~0.91** |
+| **XGBoost** ⭐ | — | — | **0.977** | **0.847** |
 | LightGBM | ~0.87 | ~0.85 | ~0.99 | ~0.90 |
 
-> 💡 **نکته**: XGBoost و LightGBM معمولاً بهترین عملکرد را دارند. اگر نصب نباشند، پروژه با Random Forest و Logistic Regression کار می‌کند.
+Measured results from this repository's pipeline (XGBoost): Test ROC-AUC **0.977**, Average Precision **0.847**, fraud recall **0.85** (83 of 98 frauds caught). Optimal threshold by F1: **0.99** (F1 = 0.83).
+
+> 💡 **Note**: XGBoost and LightGBM usually perform best. If they are not installed, the project works with Random Forest and Logistic Regression.
 
 ---
 
-## 🔧 توسعه و سفارشی‌سازی
+## 🔧 Development & Customization
 
-### اضافه کردن مدل جدید
-در `src/config.py` به `MODELS_CONFIG` اضافه کنید:
+### Adding a new model
+Add it to `MODELS_CONFIG` in `src/config.py`:
 ```python
 "catboost": {
     "class": "CatBoostClassifier",
@@ -218,8 +226,8 @@ pytest tests/ -v
 }
 ```
 
-### استفاده از دیتای شخصی
-فایل CSV خود را در `data/raw/` قرار دهید و در `config.py`:
+### Using your own data
+Place your CSV in `data/raw/` and update `config.py`:
 ```python
 TARGET_COLUMN = "your_fraud_column"
 DROP_COLUMNS = ["columns_to_drop"]
@@ -227,32 +235,16 @@ DROP_COLUMNS = ["columns_to_drop"]
 
 ---
 
-## 📝 نکات مهم
+## 📝 Important Notes
 
-1. **نسبت کلاس**: دیتای اصلی بسیار ناهمسان است (Fraud: 0.17%). SMOTE در پیش‌پردازش فعال است.
-2. **ویژگی‌ها**: ویژگی‌های V1-V28 نتیجه PCA هستند (دیتا ناشناس). تنها `Amount` و `Time` اصلی هستند.
-3. **Time**: معمولاً برای تشخیص تقلب مفید نیست و به طور پیش‌فرض حذف می‌شود.
-4. **آستانه**: 0.5 پیش‌فرض است. برای تولید از `plot_threshold_analysis` برای یافتن بهینه استفاده کنید.
-5. **استنتاج سریع**: مدل و اسکیلر در `models/` ذخیره شده‌اند و بدون نیاز به بازآموزی بارگذاری می‌شوند.
-
----
-
-## 📄 لایسنس
-
-MIT License - آزاد برای استفاده، تغییر و توزیع.
+1. **Class ratio**: the dataset is highly imbalanced (Fraud: 0.17%). SMOTE is applied inside cross-validation folds and for the final training fit only.
+2. **Features**: V1–V28 are PCA components (anonymized data). Only `Amount` and `Time` are original.
+3. **Time**: usually not useful for fraud detection and is dropped by default.
+4. **Threshold**: 0.5 by default. Use `plot_threshold_analysis` in production to find the optimum.
+5. **Fast inference**: the model and scaler are saved under `models/` and loaded without retraining.
 
 ---
 
-## 🤝 مشارکت
+## 📄 License
 
-Pull Request ها خوش‌آمدند! لطفاً:
-1. Fork کنید
-2. Branch جدید بسازید (`git checkout -b feature/amazing-feature`)
-3. تغییرات را Commit کنید (`git commit -m 'Add amazing feature'`)
-4. Push کنید (`git push origin feature/amazing-feature`)
-5. Pull Request باز کنید
-
----
-
-**توسعه‌دهنده:** Bank Fraud Detection Team  
-**ورژن:** 1.0.0
+MIT License — free to use, modify and distribute.
