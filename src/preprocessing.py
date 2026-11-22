@@ -43,17 +43,11 @@ class DataPreprocessor:
         # Step 3: Train-test split
         X_train, X_test, y_train, y_test = self._split_data(X, y)
         
-        # Step 4: Scale features
-        X_train_scaled, X_test_scaled = self._scale_features(X_train, X_test)
-        
-        # NOTE: SMOTE is intentionally NOT applied here. Resampling must happen
-        # inside cross-validation folds (see ModelTrainer) and only for the final
-        # fit, otherwise synthetic samples leak across folds and inflate CV scores.
-        
-        self.is_fitted = True
-        print("Preprocessing pipeline completed.")
-        
-        return X_train_scaled, X_test_scaled, y_train, y_test, self.feature_names
+        # Keep raw features here. Scaling and resampling are fitted inside the
+        # estimator pipeline, independently within each CV training fold.
+        self.is_fitted = False
+        print("Preprocessing pipeline completed (raw features; scaling is deferred).")
+        return X_train, X_test, y_train, y_test, self.feature_names
     
     def _drop_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """Drop specified columns."""
@@ -136,14 +130,11 @@ class DataPreprocessor:
         Returns:
             Scaled numpy array.
         """
-        if not self.is_fitted:
-            # Load scaler if not fitted in current session
-            self.scaler = joblib.load(SCALER_FILE)
-            self.is_fitted = True
-        
-        # Ensure columns match training data
-        X = X[self.feature_names]
-        return self.scaler.transform(X)
+        # Scaling is owned by the fitted model Pipeline. This helper now only
+        # aligns raw input columns; it deliberately does not fit or load a scaler.
+        if self.feature_names is None:
+            raise ValueError("Feature names are unavailable; preprocess training data first")
+        return X[self.feature_names].to_numpy()
     
     def load_scaler(self):
         """Load the saved scaler."""
