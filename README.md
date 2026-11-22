@@ -15,7 +15,7 @@ Built on the well-known [Credit Card Fraud Detection dataset from Kaggle](https:
 
 | Feature | Description |
 |----------|---------|
-| **Smart preprocessing** | Feature scaling, dropping non-informative columns, and class-imbalance handling with SMOTE (applied inside CV folds — leakage-free) |
+| **Smart preprocessing** | Fold-local feature scaling and class-imbalance handling with SMOTE inside a single leakage-safe pipeline |
 | **Multiple algorithms** | Logistic Regression, Random Forest, XGBoost, LightGBM |
 | **Cross-validation** | Best model selected by F1-Score with Stratified K-Fold |
 | **Comprehensive evaluation** | Confusion Matrix, ROC Curve, Precision-Recall Curve, Threshold Analysis |
@@ -34,14 +34,13 @@ Bank Fraud Detection/
 │       └── creditcard.csv          # Main dataset (downloaded from Kaggle)
 │
 ├── models/
-│   ├── best_fraud_model.joblib     # Trained best model
-│   └── scaler.joblib               # Scaler for preprocessing
+│   └── best_fraud_model.joblib     # Complete fitted pipeline (scaler + classifier)
 │
 ├── src/
 │   ├── __init__.py
 │   ├── config.py                   # Project configuration
 │   ├── data_loader.py              # Data loading & validation
-│   ├── preprocessing.py            # Preprocessing, scaling, split
+│   ├── preprocessing.py            # Raw feature preparation and split
 │   ├── train.py                    # Model training & selection (SMOTE inside CV)
 │   ├── evaluate.py                 # Evaluation & visualization
 │   ├── predict.py                  # Production inference
@@ -204,7 +203,7 @@ On the Credit Card Fraud Detection dataset (284,807 transactions, 492 frauds ≈
 | **XGBoost** ⭐ | — | — | **0.977** | **0.847** |
 | LightGBM | ~0.87 | ~0.85 | ~0.99 | ~0.90 |
 
-Measured results from this repository's pipeline (XGBoost): Test ROC-AUC **0.977**, Average Precision **0.847**, fraud recall **0.85** (83 of 98 frauds caught). Optimal threshold by F1: **0.99** (F1 = 0.83).
+The table and figures above are historical benchmark notes and have not yet been re-measured with the corrected fold-local pipeline. Re-run the full training pipeline before treating them as current performance claims.
 
 > 💡 **Note**: XGBoost and LightGBM usually perform best. If they are not installed, the project works with Random Forest and Logistic Regression.
 
@@ -237,7 +236,7 @@ DROP_COLUMNS = ["columns_to_drop"]
 
 ## 📝 Important Notes
 
-1. **Class ratio**: the dataset is highly imbalanced (Fraud: 0.17%). SMOTE is applied inside cross-validation folds and for the final training fit only.
+1. **Class ratio**: the dataset is highly imbalanced (Fraud: 0.17%). Scaling and SMOTE are fit only on each CV training fold; the final pipeline is fit on the training split only. The held-out test split is never resampled.
 2. **Features**: V1–V28 are PCA components (anonymized data). Only `Amount` and `Time` are original.
 3. **Time**: usually not useful for fraud detection and is dropped by default.
 4. **Threshold**: 0.5 by default. Use `plot_threshold_analysis` in production to find the optimum.

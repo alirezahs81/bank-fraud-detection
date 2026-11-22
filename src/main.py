@@ -33,7 +33,7 @@ def main():
     loader.print_data_info(df)
     
     # Step 2: Preprocess Data
-    print("\n[Step 2/5] Preprocessing Data & Scaling...")
+    print("\n[Step 2/5] Preprocessing Data (scaling inside model CV pipeline)...")
     preprocessor = DataPreprocessor()
     X_train, X_test, y_train, y_test, feature_names = preprocessor.preprocess_pipeline(df)
     print(f"Preprocessing completed. Training set shape: {X_train.shape}")
