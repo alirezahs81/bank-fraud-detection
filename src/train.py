@@ -97,6 +97,9 @@ class ModelTrainer:
             
             # Adjust params for XGBoost
             params = config["params"].copy()
+            if USE_SMOTE and "class_weight" in params:
+                # SMOTE balances the training data; avoid double-weighting.
+                params["class_weight"] = None
             if name == "xgboost":
                 # SMOTE balances the training folds; avoid applying the original
                 # imbalance ratio a second time to XGBoost.
@@ -167,7 +170,7 @@ class ModelTrainer:
 
     def _select_best_model(self):
         """Select the best model based on cross-validation F1 score."""
-        best_f1 = 0
+        best_f1 = -1.0
         for name, results in self.cv_results.items():
             if results['f1_mean'] > best_f1:
                 best_f1 = results['f1_mean']
