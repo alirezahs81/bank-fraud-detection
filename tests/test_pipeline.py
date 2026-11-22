@@ -116,9 +116,11 @@ class TestDataPreprocessor:
     def test_preprocess_pipeline_shape(self):
         X_train, X_test, y_train, y_test, feature_names = self.preprocessor.preprocess_pipeline(self.df)
         
-        # Check shapes - SMOTE increases train size, so total > original
+        # Preprocessing returns raw train/test features; resampling occurs only
+        # inside the model pipeline, never before the split or CV folds.
         assert X_test.shape[0] == pytest.approx(len(self.df) * TEST_SIZE, rel=0.1)
-        assert X_train.shape[0] >= len(self.df) * (1 - TEST_SIZE)  # At least original train size
+        assert X_train.shape[0] == pytest.approx(len(self.df) * (1 - TEST_SIZE), rel=0.1)
+        assert not self.preprocessor.is_fitted
         assert len(feature_names) == 29  # V1-V28 + Amount (Time dropped)
         assert 'Time' not in feature_names
         assert 'Amount' in feature_names
@@ -131,8 +133,8 @@ class TestDataPreprocessor:
         test_fraud_rate = y_test.mean()
         original_fraud_rate = self.df['Class'].mean()
         
-        # After SMOTE, train should be balanced (~0.5)
-        # Test should be close to original
+        # Both labels remain at their original stratified proportions here;
+        # SMOTE is applied only later inside estimator training folds.
         assert test_fraud_rate == pytest.approx(original_fraud_rate, rel=0.2)
     
     def test_drop_columns(self):
@@ -183,6 +185,13 @@ class TestModelTrainer:
         assert "random_forest" in self.trainer.models
         # XGBoost and LightGBM may not be available in test env
     
+    def test_build_pipeline_keeps_scaling_and_smote_inside_estimator(self):
+        from sklearn.linear_model import LogisticRegression
+        pipeline = self.trainer._build_pipeline(LogisticRegression())
+        assert list(pipeline.named_steps) == ["scaler", "smote", "classifier"]
+        assert pipeline.named_steps["scaler"].__class__.__name__ == "StandardScaler"
+        assert pipeline.named_steps["smote"].__class__.__name__ == "SMOTE"
+
     def test_cross_validate_models(self):
         self.trainer._initialize_models(fraud_ratio=1.0)
         self.trainer._cross_validate_models(self.X_train, self.y_train)
