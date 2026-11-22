@@ -3,7 +3,8 @@ Model training module for Bank Fraud Detection project.
 """
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import cross_validate, StratifiedKFold
+from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 from src.config import USE_SMOTE, SMOTE_RANDOM_STATE
@@ -11,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    roc_auc_score, average_precision_score, make_scorer
+    roc_auc_score, average_precision_score
 )
 import joblib
 import warnings
@@ -70,11 +71,9 @@ class ModelTrainer:
         # Select best model
         self._select_best_model()
         
-        # Final fit on the SMOTE-resampled training split
-        X_train_fit, y_train_fit = X_train, y_train
-        if USE_SMOTE:
-            X_train_fit, y_train_fit = self._resample_train(X_train, y_train)
-        self.best_model.fit(X_train_fit, y_train_fit)
+        # Fit the complete pipeline on the untouched training split. The
+        # scaler and SMOTE are fitted only on each training fold / final train set.
+        self.best_model.fit(X_train, y_train)
         
         # Final evaluation on test set
         self._evaluate_on_test_set(X_test, y_test)
@@ -105,52 +104,46 @@ class ModelTrainer:
             self.models[name] = model_class(**params)
             print(f"Initialized {name}")
     
+    def _build_pipeline(self, estimator):
+        """Build leakage-safe preprocessing, resampling and estimator pipeline."""
+        steps = [("scaler", StandardScaler())]
+        if USE_SMOTE:
+            steps.append(("smote", SMOTE(random_state=SMOTE_RANDOM_STATE, k_neighbors=5)))
+        steps.append(("classifier", estimator))
+        return ImbPipeline(steps=steps)
+
     def _cross_validate_models(self, X_train, y_train):
-        """Perform cross-validation for all models."""
+        """Evaluate each model with scaling and SMOTE fitted within CV folds."""
         cv = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
-        
-        # Define scoring metrics
         scoring = {
-            'accuracy': 'accuracy',
-            'precision': 'precision',
-            'recall': 'recall',
-            'f1': 'f1',
-            'roc_auc': 'roc_auc',
-            'average_precision': 'average_precision'
+            "accuracy": "accuracy", "precision": "precision", "recall": "recall",
+            "f1": "f1", "roc_auc": "roc_auc", "average_precision": "average_precision"
         }
-        
-        print(f"\nPerforming {CV_FOLDS}-fold cross-validation...")
-        
-        for name, model in self.models.items():
-            print(f"\nEvaluating {name}...")
-            cv_results = cross_val_score(
-                model, X_train, y_train,
-                cv=cv, scoring='f1', n_jobs=-1
+        print(f"\\nPerforming {CV_FOLDS}-fold cross-validation...")
+        for name, estimator in self.models.items():
+            print(f"\\nEvaluating {name}...")
+            pipeline = self._build_pipeline(estimator)
+            result = cross_validate(
+                pipeline, X_train, y_train, cv=cv, scoring=scoring,
+                n_jobs=-1, return_train_score=False, error_score="raise"
             )
-            
-            # Also get detailed scores for all metrics
-            detailed_scores = {}
-            for metric_name, metric_scorer in scoring.items():
-                scores = cross_val_score(model, X_train, y_train, cv=cv, scoring=metric_scorer, n_jobs=-1)
-                detailed_scores[metric_name] = {
-                    'mean': scores.mean(),
-                    'std': scores.std(),
-                    'scores': scores
-                }
-            
-            self.cv_results[name] = {
-                'f1_scores': cv_results,
-                'f1_mean': cv_results.mean(),
-                'f1_std': cv_results.std(),
-                'detailed': detailed_scores
+            detailed = {
+                metric: {"mean": float(np.mean(result[f"test_{metric}"])),
+                         "std": float(np.std(result[f"test_{metric}"])),
+                         "scores": result[f"test_{metric}"]}
+                for metric in scoring
             }
-            
-            print(f"  F1 Score: {cv_results.mean():.4f} (+/- {cv_results.std()*2:.4f})")
-            print(f"  Precision: {detailed_scores['precision']['mean']:.4f}")
-            print(f"  Recall: {detailed_scores['recall']['mean']:.4f}")
-            print(f"  ROC-AUC: {detailed_scores['roc_auc']['mean']:.4f}")
-            print(f"  Avg Precision: {detailed_scores['average_precision']['mean']:.4f}")
-    
+            f1_scores = result["test_f1"]
+            self.cv_results[name] = {
+                "f1_scores": f1_scores, "f1_mean": float(np.mean(f1_scores)),
+                "f1_std": float(np.std(f1_scores)), "detailed": detailed
+            }
+            print(f"  F1 Score: {np.mean(f1_scores):.4f} (+/- {np.std(f1_scores)*2:.4f})")
+            print(f"  Precision: {detailed['precision']['mean']:.4f}")
+            print(f"  Recall: {detailed['recall']['mean']:.4f}")
+            print(f"  ROC-AUC: {detailed['roc_auc']['mean']:.4f}")
+            print(f"  Avg Precision: {detailed['average_precision']['mean']:.4f}")
+
     def _resample_train(self, X_train, y_train):
         """Resample the training split with SMOTE for the final model fit."""
         print("Resampling training split with SMOTE for final fit...")
@@ -171,7 +164,7 @@ class ModelTrainer:
                 self.best_score = best_f1
         
         # Train best model on full training data
-        self.best_model = self.models[self.best_model_name]
+        self.best_model = self._build_pipeline(self.models[self.best_model_name])
         print(f"\nBest model: {self.best_model_name} (CV F1: {self.best_score:.4f})")
     
     def _evaluate_on_test_set(self, X_test, y_test):
@@ -201,6 +194,7 @@ class ModelTrainer:
     
     def _save_best_model(self):
         """Save the best model to disk."""
+        MODEL_FILE.parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(self.best_model, MODEL_FILE)
         print(f"\nBest model saved to {MODEL_FILE}")
     
