@@ -133,9 +133,9 @@ class ModelTrainer:
             "accuracy": "accuracy", "precision": "precision", "recall": "recall",
             "f1": "f1", "roc_auc": "roc_auc", "average_precision": "average_precision"
         }
-        print(f"\\nPerforming {CV_FOLDS}-fold cross-validation...")
+        print(f"\nPerforming {CV_FOLDS}-fold cross-validation...")
         for name, estimator in self.models.items():
-            print(f"\\nEvaluating {name}...")
+            print(f"\nEvaluating {name}...")
             pipeline = self._build_pipeline(estimator)
             result = cross_validate(
                 pipeline, X_train, y_train, cv=cv, scoring=scoring,
