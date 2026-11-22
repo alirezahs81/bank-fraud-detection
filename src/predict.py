@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import joblib
 from pathlib import Path
-from src.config import MODEL_FILE, SCALER_FILE, TARGET_COLUMN, DROP_COLUMNS, DEFAULT_THRESHOLD
-from src.preprocessing import DataPreprocessor
+from src.config import MODEL_FILE, SCALER_FILE, DROP_COLUMNS, DEFAULT_THRESHOLD
 
 
 class FraudPredictor:
@@ -36,14 +35,18 @@ class FraudPredictor:
         print(f"Loading model from {self.model_path}...")
         self.model = joblib.load(self.model_path)
         
-        print(f"Loading scaler from {self.scaler_path}...")
-        self.scaler = joblib.load(self.scaler_path)
-        
-        # Get feature names from scaler
-        if hasattr(self.scaler, 'feature_names_in_'):
-            self.feature_names = self.scaler.feature_names_in_.tolist()
+        # New artifacts are complete sklearn/imblearn pipelines and own scaling.
+        # Retain compatibility with older model + standalone scaler artifacts.
+        if hasattr(self.model, "named_steps") and "scaler" in self.model.named_steps:
+            self.scaler = None
+            scaler = self.model.named_steps["scaler"]
         else:
-            # Fallback: expect 29 features (V1-V28 + Amount)
+            print(f"Loading legacy scaler from {self.scaler_path}...")
+            self.scaler = joblib.load(self.scaler_path)
+            scaler = self.scaler
+        if hasattr(scaler, "feature_names_in_"):
+            self.feature_names = scaler.feature_names_in_.tolist()
+        else:
             self.feature_names = [f'V{i}' for i in range(1, 29)] + ['Amount']
         
         print(f"Predictor ready. Features: {len(self.feature_names)}")
@@ -73,15 +76,15 @@ class FraudPredictor:
         # Preprocess
         df_processed = self._preprocess(df)
         
-        # Scale
-        X_scaled = self.scaler.transform(df_processed)
+        # The full pipeline accepts raw features; legacy artifacts require scaling.
+        X_input = self.scaler.transform(df_processed) if self.scaler is not None else df_processed
         
         # Predict
         if return_probability:
-            probabilities = self.model.predict_proba(X_scaled)[:, 1]
+            probabilities = self.model.predict_proba(X_input)[:, 1]
             return probabilities
         else:
-            probabilities = self.model.predict_proba(X_scaled)[:, 1]
+            probabilities = self.model.predict_proba(X_input)[:, 1]
             predictions = (probabilities >= self.threshold).astype(int)
             return predictions
     
