@@ -43,6 +43,7 @@ class ModelTrainer:
         self.best_model = None
         self.best_model_name = None
         self.best_score = 0
+        self.smote_k_neighbors = 5
     
     def train_and_evaluate(self, X_train, y_train, X_test, y_test):
         """
@@ -97,7 +98,9 @@ class ModelTrainer:
             # Adjust params for XGBoost
             params = config["params"].copy()
             if name == "xgboost":
-                params["scale_pos_weight"] = fraud_ratio
+                # SMOTE balances the training folds; avoid applying the original
+                # imbalance ratio a second time to XGBoost.
+                params["scale_pos_weight"] = 1.0 if USE_SMOTE else fraud_ratio
             
             # Create model instance
             model_class = globals()[config["class"]]
@@ -108,12 +111,20 @@ class ModelTrainer:
         """Build leakage-safe preprocessing, resampling and estimator pipeline."""
         steps = [("scaler", StandardScaler())]
         if USE_SMOTE:
-            steps.append(("smote", SMOTE(random_state=SMOTE_RANDOM_STATE, k_neighbors=5)))
+            steps.append(("smote", SMOTE(
+                random_state=SMOTE_RANDOM_STATE, k_neighbors=self.smote_k_neighbors
+            )))
         steps.append(("classifier", estimator))
         return ImbPipeline(steps=steps)
 
     def _cross_validate_models(self, X_train, y_train):
         """Evaluate each model with scaling and SMOTE fitted within CV folds."""
+        class_counts = pd.Series(y_train).value_counts()
+        if len(class_counts) < 2 or int(class_counts.min()) < CV_FOLDS:
+            raise ValueError(f"Need at least {CV_FOLDS} samples in each class for stratified CV")
+        # Ensure SMOTE k_neighbors remains valid in the smallest CV training fold.
+        min_fold_train_count = int(class_counts.min() * (CV_FOLDS - 1) / CV_FOLDS)
+        self.smote_k_neighbors = max(1, min(5, min_fold_train_count - 1))
         cv = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
         scoring = {
             "accuracy": "accuracy", "precision": "precision", "recall": "recall",
