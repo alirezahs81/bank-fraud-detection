@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from src.config import (
     TARGET_COLUMN, DROP_COLUMNS, TEST_SIZE, RANDOM_STATE,
-    MODELS_CONFIG, METRICS, DEFAULT_THRESHOLD
+    MODELS_CONFIG, METRICS, DEFAULT_THRESHOLD, USE_SMOTE
 )
 from src.data_loader import DataLoader
 from src.preprocessing import DataPreprocessor
@@ -183,6 +183,9 @@ class TestModelTrainer:
         
         assert "logistic_regression" in self.trainer.models
         assert "random_forest" in self.trainer.models
+        if USE_SMOTE:
+            assert self.trainer.models["logistic_regression"].class_weight is None
+            assert self.trainer.models["random_forest"].class_weight is None
         # XGBoost and LightGBM may not be available in test env
     
     def test_build_pipeline_keeps_scaling_and_smote_inside_estimator(self):
